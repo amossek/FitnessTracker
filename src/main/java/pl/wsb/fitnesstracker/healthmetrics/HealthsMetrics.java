@@ -10,11 +10,10 @@ import lombok.ToString;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "health metrics")
+@Table(name = "health_metrics")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString
-
 
 public class HealthsMetrics {
 
