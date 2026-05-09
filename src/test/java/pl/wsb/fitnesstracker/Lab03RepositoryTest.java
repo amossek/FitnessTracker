@@ -90,4 +90,5 @@ class Lab03RepositoryTest {
 
         assertThat(count).isEqualTo(2L);
     }
+
 }
