@@ -1,11 +1,16 @@
 package pl.wsb.fitnesstracker.user.internal;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import pl.wsb.fitnesstracker.user.api.SimpleUserDto;
+import pl.wsb.fitnesstracker.user.api.User;
 import pl.wsb.fitnesstracker.user.api.UserDto;
+import pl.wsb.fitnesstracker.user.api.UserEmailDto;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * UserController is responsible for handling HTTP requests related to user operations.
@@ -20,13 +25,66 @@ class UserController {
 
     private final UserMapper userMapper;
 
-    @PostMapping
-    public UserDto addUser(@RequestBody UserDto userDto) throws InterruptedException {
-
-        // TODO: Implement the method to add a new user.
-        //  You can use the @RequestBody annotation to map the request body to the UserDto object.
-
-        return null;
+    @GetMapping
+    public List<UserDto> getAllUsers() {
+        return userService.findAllUsers().stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
+    @GetMapping("/simple")
+    public List<SimpleUserDto> getAllSimpleUsers() {
+        return userService.findAllUsers().stream()
+                .map(userMapper::toSimpleDto)
+                .toList();
+    }
+
+    @GetMapping("/{id}")
+
+    public UserDto getUserById(@PathVariable Long id) {
+        User user = userService.getUser(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return userMapper.toDto(user);
+
+    }
+
+    @GetMapping("/email")
+    public List<UserEmailDto> getUserByEmail(@RequestParam String email) {
+        return userService.findUsersByEmailFragment(email).stream()
+                .map(userMapper::toEmailDto)
+                .toList();
+
+    }
+
+    @GetMapping("/older/{time}")
+
+    public List<UserDto> getUsersOlderThan(
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate time) {
+        return userService.findUsersOlderThan(time).stream()
+                .map(userMapper::toDto)
+                .toList();
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserDto addUser(@RequestBody UserDto userDto) {
+        User user = userMapper.toEntity(userDto);
+        User createdUser = userService.createUser(user);
+        return userMapper.toDto(createdUser);
+
+    }
+
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
+
+    }
+
+    @PutMapping("/{userId}")
+    public UserDto updateUser(@PathVariable Long userId, @RequestBody UserDto userDto) {
+        User updatedUser = userMapper.toEntity(userDto);
+        User savedUser = userService.updateUser(userId, updatedUser);
+        return userMapper.toDto(savedUser);
+    }
 }
